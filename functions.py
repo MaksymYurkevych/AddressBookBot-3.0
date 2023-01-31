@@ -1,5 +1,6 @@
 from decorators import error_handler
 from class_part import *
+from difflib import SequenceMatcher
 
 HELP_INSTRUCTIONS = """This contact bot save your contacts 
     Global commands:
@@ -102,6 +103,18 @@ def delete_contact(*args):
 
 
 @error_handler
+def add_email(*args):
+    name = Name(args[0])
+    email = Email(args[1])
+    rec = ADDRESSBOOK.get(name.value)
+
+    if rec:
+        rec.add_email(email)
+        return f"Email for {name.value} was added"
+    return f"{name.value} is not in your contact list"
+
+
+@error_handler
 def add_birthday(*args):
     name = Name(args[0])
     birthday = Birthday(args[1])
@@ -167,19 +180,28 @@ COMMANDS = {
     helper: "help",
     delete_contact: "delete contact",
     search: "search",
+    add_email: "add email",
 }
 
 
 def command_parser(user_input):
+    ratio = 0
+    possible_command = ""
     for command, key_word in COMMANDS.items():
         if user_input.startswith(key_word):
             return command, user_input.replace(key_word, "").strip().split(" ")
+        else:
+            a = SequenceMatcher(None, user_input, key_word).ratio()
+            if a > ratio:
+                ratio = a
+                possible_command = key_word
+    print(f"Maybe you meant '{possible_command}' ?")
     return None, None
 
 
 def main():
     print(
-        "Here's a list of available commands: 'Hello', 'Add contact', 'Add birthday', 'When birthday', "
+        "Here's a list of available commands: 'Hello', 'Add contact', 'Add birthday', 'Add email',s 'When birthday', "
         "'Delete contact', 'Change', 'Phone', 'Show all', 'Delete phone', 'Search', 'Help', 'Exit'")
     try:
         ADDRESSBOOK.open_file()
@@ -206,46 +228,44 @@ def main():
 
         command, data = command_parser(user_input.lower())
 
-        if not command:
-            print("Sorry, unknown command")
-        else:
+        if command:
             print(command(*data))
 
 
 if __name__ == '__main__':
 
-    ab = AddressBook()
-    rec1 = Record(Name("Bill"), Phone("1234567890"))
-    print(rec1)
-    try:
-        rec2 = Record(Name("Jill"), Phone("0987654321"), Birthday("12.03.1995"))
-    except ValueError as e:
-        print(e)
-    rec2 = Record(Name("Jill"), Phone("0987654321"), Birthday("12-03-1995"))
-    print(rec2)
-    ab.add_record(rec1)
-    ab.add_record(rec2)
-    print(ab)
-
-    phone3 = Phone("7893453434")
-    print(phone3)
-    rec1.add_phone(phone3)
-
-    print(ab)
-
-    bd = Birthday("25-04-1986")
-
-    rec1.add_birthday(bd)
-
-    phone4 = Phone("7893453434")  # такий самий, як phone3, але це інший інстанс
-
-    phone5 = Phone("0667899999")
-
-    print(rec1.change(phone4, phone5))
-
-    print(ab)
-
-    print(ab.get("Bill").days_to_birthday())
-    print(ab.get("Jill").days_to_birthday())
+    # ab = AddressBook()
+    # rec1 = Record(Name("Bill"), Phone("1234567890"))
+    # print(rec1)
+    # try:
+    #     rec2 = Record(Name("Jill"), Phone("0987654321"), Birthday("12.03.1995"))
+    # except ValueError as e:
+    #     print(e)
+    # rec2 = Record(Name("Jill"), Phone("0987654321"), Birthday("12-03-1995"))
+    # print(rec2)
+    # ab.add_record(rec1)
+    # ab.add_record(rec2)
+    # print(ab)
+    #
+    # phone3 = Phone("7893453434")
+    # print(phone3)
+    # rec1.add_phone(phone3)
+    #
+    # print(ab)
+    #
+    # bd = Birthday("25-04-1986")
+    #
+    # rec1.add_birthday(bd)
+    #
+    # phone4 = Phone("7893453434")  # такий самий, як phone3, але це інший інстанс
+    #
+    # phone5 = Phone("0667899999")
+    #
+    # print(rec1.change(phone4, phone5))
+    #
+    # print(ab)
+    #
+    # print(ab.get("Bill").days_to_birthday())
+    # print(ab.get("Jill").days_to_birthday())
 
     main()

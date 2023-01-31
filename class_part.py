@@ -1,6 +1,7 @@
 from collections import UserDict
 from datetime import datetime
 import pickle
+import re
 
 
 class Field:
@@ -63,19 +64,40 @@ class Birthday(Field):
             raise ValueError("Birthday must be in 'DD-MM-YYYY' format")
 
 
+class Email(Field):
+    """Creating 'email fields'"""
+
+    def __str__(self):
+        return self.value
+
+    def __repr__(self):
+        return str(self)
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value):
+        if not re.findall(r"\b[A-Za-z][\w+.]+@\w+[.][a-z]{2,3}", value):
+            raise ValueError('Wrong format')
+        self.__value = value
+
+
 class Record:
     """Class for add, remove, change fields"""
 
-    def __init__(self, name: Name, phone: Phone = None, birthday: Birthday = None):
+    def __init__(self, name: Name, phone: Phone = None, birthday: Birthday = None, email: Email = None):
 
         self.birthday = birthday
+        self.email = email
         self.name = name
         self.phones = []
         if phone:
             self.phones.append(phone)
 
     def __str__(self) -> str:
-        return f'Name: {self.name} Phone: {", ".join([str(p) for p in self.phones])} {"Birthday: " + str(self.birthday) if self.birthday else ""}'
+        return f'Name: {self.name} Phone: {", ".join([str(p) for p in self.phones])} {"Birthday: " + str(self.birthday) if self.birthday else ""} Email: {str(self.email) if self.email else ""}'
 
     def __repr__(self) -> str:
         return str(self)
@@ -94,6 +116,9 @@ class Record:
 
     def add_birthday(self, birthday: Birthday):
         self.birthday = birthday
+
+    def add_email(self, email: Email):
+        self.email = email
 
     def days_to_birthday(self):
 
@@ -119,6 +144,7 @@ class Record:
             "name": str(self.name.value),
             "phone": phones,
             "birthday": self.birthday,
+            "email": self.email,
         }
 
     def remove_phone(self, phone):
@@ -164,7 +190,7 @@ class AddressBook(UserDict):
 
     def show_all_records(self):
         return "\n".join(
-            f"Name: {rec.name}; Birthday: {rec.birthday}; Phone: {', '.join([ph.value for ph in rec.phones])}" for rec
+            f"Name: {rec.name}; Birthday: {rec.birthday}; Phone: {', '.join([ph.value for ph in rec.phones])} Email: {rec.email}" for rec
             in self.data.values())
 
     def change_record(self, username, old_n, new_n):
